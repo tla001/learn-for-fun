@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration status="INFO" monitorInterval="60">
+    <Properties>
+        <Property name="LOG_HOME" value="${sys:user.home}/logs/spring-boot-log4j2/logs/"/>
+        <Property name="PATTERN" value="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%t] (%F:%L) - %m%n"/>
+    </Properties>
+    <Appenders>
+        <Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
+            <PatternLayout pattern="${PATTERN}"/>
+        </Console>
+        <RollingFile name="APPENDER_ALARM" fileName="${LOG_HOME}/alarm.log" filePattern="${LOG_HOME}/alarm.%d{yyyy-MM-dd}.%i.log">
+            <Filters>
+                <LogAlarmFilter/>
+                <LevelRangeFilter minLevel="ERROR" maxLevel="ERROR" onMatch="ACCEPT"/>
+            </Filters>
+            <PatternLayout pattern="${PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30">
+                <Delete basePath="${LOG_HOME}/" maxDepth="1">
+                    <IfFileName glob="alarm.*.log"/>
+                    <IfLastModified age="7d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <RollingFile name="APPENDER_APPLICATION" fileName="${LOG_HOME}/application.log" filePattern="${LOG_HOME}/application.%d{yyyy-MM-dd}.%i.log">
+            <Filters>
+                <LevelRangeFilter minLevel="FATAL" maxLevel="DEBUG" onMatch="ACCEPT"/>
+            </Filters>
+            <PatternLayout pattern="${PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30">
+                <Delete basePath="${LOG_HOME}/" maxDepth="1">
+                    <IfFileName glob="application.*.log"/>
+                    <IfLastModified age="7d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <Async name="ASYNC_APPLICATION" includeLocation="true">
+            <AppenderRef ref="APPENDER_APPLICATION"/>
+        </Async>
+
+        <RollingFile name="APPENDER_SERVICE" fileName="${LOG_HOME}/service.log" filePattern="${LOG_HOME}/service.%d{yyyy-MM-dd}.%i.log">
+            <Filters>
+                <LevelRangeFilter minLevel="FATAL" maxLevel="DEBUG" onMatch="ACCEPT"/>
+            </Filters>
+            <PatternLayout pattern="${PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+                <SizeBasedTriggeringPolicy size="200MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30">
+                <Delete basePath="${LOG_HOME}/" maxDepth="1">
+                    <IfFileName glob="service.*.log"/>
+                    <IfLastModified age="7d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <Async name="ASYNC_SERVICE" includeLocation="true">
+            <AppenderRef ref="APPENDER_SERVICE"/>
+        </Async>
+    </Appenders>
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="ASYNC_APPLICATION"/>
+            <AppenderRef ref="APPENDER_ALARM"/>
+            <AppenderRef ref="ConsoleAppender"/>
+        </Root>
+        <Logger name="cn.tla001" level="INFO" additivity="false">
+            <AppenderRef ref="ASYNC_SERVICE"/>
+            <AppenderRef ref="APPENDER_ALARM"/>
+            <AppenderRef ref="ConsoleAppender"/>
+        </Logger>
+    </Loggers>
+</Configuration>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <springProperty name="spring.application.name" scope="context" source="spring.application.name"/>
+    <property name="LOG_PATH" value="${user.home}/logs/${spring.application.name}/logs"/>
+
+    <!-- 日志格式 -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%c){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+    <property name="FILE_LOG_PATTERN"
+              value="%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %c : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+    <!--输出到控制台-->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!--输出到文件-->
+    <appender name="APPENDER_APPLICATION" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/application.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/application.%d{yyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>3</maxHistory>
+            <maxFileSize>100MB</maxFileSize>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+    <appender name="ASYNC_APPLICATION" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="APPENDER_APPLICATION"/>
+    </appender>
+
+    <appender name="APPENDER_SERVICE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/service.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/service.%d{yyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>3</maxHistory>
+            <maxFileSize>100MB</maxFileSize>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+    <appender name="ASYNC_SERVICE" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="APPENDER_SERVICE"/>
+    </appender>
+
+
+    <appender name="APPENDER_ALARM" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="cn.tla001.spring.demo.plugin.LogAlarmFilter"/>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <file>${LOG_PATH}/alarm.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/alarm.%d{yyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>3</maxHistory>
+            <maxFileSize>100MB</maxFileSize>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <logger name="cn.tla001" additivity="false">
+        <appender-ref ref="APPENDER_ALARM"/>
+        <appender-ref ref="ASYNC_SERVICE"/>
+    </logger>
+
+    <logger name="alarm" additivity="false">
+        <appender-ref ref="APPENDER_ALARM"/>
+        <appender-ref ref="ASYNC_SERVICE"/>
+    </logger>
+
+    <!-- (多环境配置日志级别)根据不同的环境设置不同的日志输出级别 -->
+    <springProfile name="default,local">
+        <root level="DEBUG">
+            <appender-ref ref="console"/>
+            <appender-ref ref="ASYNC_APPLICATION"/>
+        </root>
+    </springProfile>
+
+
+    <springProfile name="product,pre">
+        <root level="INFO">
+            <appender-ref ref="console"/>
+            <appender-ref ref="ASYNC_APPLICATION"/>
+        </root>
+    </springProfile>
+
+</configuration>
